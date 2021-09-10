@@ -5,9 +5,6 @@
 //  Created by ashley on 27/09/2020.
 //
 
-//#define BREADBOARD
-//#define STRIPBOARD
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -32,9 +29,10 @@ static int erasebyte = 0xff;
 static gboolean testmode = FALSE;
 static gchar *format = NULL;
 static int delayusec = 10000;
+static int pulsewidth = 1; 
 
 static GOptionEntry entries[] = {
-    {"address",     'a', 0, G_OPTION_ARG_INT, &mcpaddr, "MCP address", NULL},
+    {"address",     'a', 0, G_OPTION_ARG_INT, &mcpaddr, "MCP hardware address", NULL},
     {"spiclock",    'c', 0, G_OPTION_ARG_INT, &clock_divider, "SPI clock divider", NULL},
     {"rombase",     'b', 0, G_OPTION_ARG_INT, &rombase, "ROM base address", NULL},
     {"memsize",     's', 0, G_OPTION_ARG_INT, &memsize, "ROM size (bytes)", NULL},
@@ -49,6 +47,7 @@ static GOptionEntry entries[] = {
     {"format",      'f', 0, G_OPTION_ARG_STRING, &format, "Format", NULL},
     {"testmode",    't', 0, G_OPTION_ARG_NONE, &testmode, "Test mode", NULL},
     {"delay",       'd', 0, G_OPTION_ARG_INT, &delayusec, "Programming delay (usec)", NULL},
+    {"pulsewidth",  'p', 0, G_OPTION_ARG_INT, &pulsewidth, "Write enable pulse width (usec)", NULL},
     {NULL}
 };
 
@@ -62,29 +61,6 @@ uint8_t dataport = -1;
 uint8_t datadir = -1;
 uint8_t addrport = -1;
 uint8_t addrdir = -1;
-
-//    Pins for A8-A12
-//#ifdef BREADBOARD
-//uint8_t addrpins[] = {26, 5, 23, 19, 24};							// Breadboard
-//uint8_t write_en = 4;
-//uint8_t output_en = 17;
-
-//uint8_t dataport = GPIOA;
-//uint8_t datadir = IODIRA;
-//uint8_t addrport = GPIOB;
-//uint8_t addrdir = IODIRB;
-//#endif
-
-//#ifdef STRIPBOARD
-//uint8_t addrpins[] = {7, 24, 21, 25, 23};						// Srtipboard
-//uint8_t write_en = 16;
-//uint8_t output_en = 8;
-
-//uint8_t dataport = GPIOB;
-//uint8_t datadir = IODIRB;
-//uint8_t addrport = GPIOA;
-//uint8_t addrdir = IODIRA;
-//#endif
 
 int main(int argc, const char * argv[])
 {
@@ -100,6 +76,8 @@ int main(int argc, const char * argv[])
     
     GKeyFile *keyfile = g_key_file_new();
     gboolean loaded = g_key_file_load_from_file(keyfile, "/home/pi/.eeprogrc", G_KEY_FILE_NONE, NULL);
+    
+    int busy = -1;
  
  //	TO DO - read in npins and put a loop in...   
     if (loaded) {
@@ -110,6 +88,7 @@ int main(int argc, const char * argv[])
 		addrpins[4] = g_key_file_get_integer(keyfile, "GPIO", "A12", NULL);
 		output_en = g_key_file_get_integer(keyfile, "GPIO", "OE", NULL);
 		write_en = g_key_file_get_integer(keyfile, "GPIO", "WE", NULL);
+		busy = g_key_file_get_integer(keyfile, "GPIO", "BUSY", NULL);
 		mcpaddr = g_key_file_get_integer(keyfile, "MCP23S17", "SPIaddress", NULL);
 		gchar *port = g_key_file_get_string(keyfile, "MCP23S17", "data", NULL);
 
@@ -147,7 +126,6 @@ int main(int argc, const char * argv[])
 		putchar('\n');
 	}
 	
-//    gchar *filename;
     if (argc<=1 && (writerom || verifyrom)) {
         puts("No filename provided.");
         exit(-1);
@@ -182,6 +160,8 @@ int main(int argc, const char * argv[])
 	
 	eeprom->testmode = testmode;
 	eeprom->delayusec = delayusec;
+	eeprom->busy = busy;
+	eeprom->pulsewidth = pulsewidth;
 
 	uint8_t byte = 0x00;
     uint16_t address;
@@ -191,7 +171,6 @@ int main(int argc, const char * argv[])
 		address = rombase;
 		for(;;) {
 			eeprom_readbyte(eeprom, address - rombase, &byte);
-//			printf("%04x %02x\n", address, byte);
 			printf("%04x %02x ", address, byte);
 			fflush(stdout);
 			fgets(lnbffr, 80, stdin);
@@ -250,22 +229,6 @@ int main(int argc, const char * argv[])
                 printf("Read error from memory_loadSRecFile %d.\n", nread);
                 goto finish;
             } else {
-/*                if (address<rombase || (address - rombase)>memsize) {
-                    printf("\nAddress out of bounds %04x\n", address);
-                    break;
-                }
-                
-                printf("%04x", address);
-                int n;
-                for(n=0; n<nread; n++) {
-					byte = memory[n];
-                    printf(" %02x", byte);
- 
-					eeprom_writebyte(eeprom, address, byte, 0);
-                    address++;
-                }
-                printf("\n"); */
-//               printf("%04x %d\n", address, nread);
                 eeprom_writebuffer(eeprom, address - rombase, memory, nread, method);
             }
         }
@@ -274,23 +237,6 @@ int main(int argc, const char * argv[])
         free(memory);
     }
 
-//	TO DO - don't print out 'rows' of 16 0xffs...?
-/*    if (readrom) {
-        if (verbose) printf("Reading EEPROM... memsize = 0x%04x\n", memsize);
-        
-        for(address = 0; address<memsize; address++) {
-            if ((address & 0x0f)==0) {
-                printf("\n%04x", rombase + address);
-            }
-            
-			eeprom_readbyte(eeprom, address, &byte);
-
-            printf(" %02x", byte);
-        }
-
-        putchar('\n');
-    } */
-    
     if (readrom) {
         if (verbose) printf("Reading EEPROM... rombase = 0x%04x, memsize = 0x%04x\n\n", rombase, memsize);
         
@@ -299,10 +245,10 @@ int main(int argc, const char * argv[])
         for(address = 0; address<memsize; address+=16) {
 			int i;
 			int suppress = TRUE;
+//			int suppress = FALSE;
 			for(i=0; i<16; i++) {
 				eeprom_readbyte(eeprom, address + i, &byte);
 				if (byte!=0xff) suppress = FALSE;
-//				printf("%04x %2d %02x %d\n", address, i, byte, suppress);
 				bytebffr[i] = byte;
 			}
 		
@@ -310,7 +256,6 @@ int main(int argc, const char * argv[])
 				continue;
 			}
 		
-//			suppress = FALSE;
 			if (!format) {
 				printf("%04x", rombase + address);
 				for(i=0; i<16; i++) {

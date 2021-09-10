@@ -85,10 +85,6 @@ default (10,000) should be good for 28c42 chips.
 Mode 1 (*not tested*) will read back the location just programmed and wait until the value
 read back matches the one just written.
 
-Mode 2 (not yet implemented*) is similar to mode 0 but till wait for the BUSY line to be low before
-writing a byte and then wait until it goes high afterwards. This prbably useless for writing EEPROMS
-but might one day be useful for sending code to a retrocomputer.
-
 ## -e BYTE
 Set the value to be written to all EEPROM locations when erasing. Default 0xff.
 
@@ -111,7 +107,7 @@ If data is set to B, then port B will be used for the EEPROM data and A for the 
 order (bits 0 to 7) addresses. If 'B' the other way round. This must be set. OE
 and WE allow to specify the GPIO pins for the EEPROM's output enable and write
 enable pins. A8 to A12 specify the high order address pins - currently only EEPROMs
-with a size of no more than 8kbytes may be programmed.
+with a size of no more than 8kbytes can be programmed.
 
 An example file is given below.  
 
@@ -129,3 +125,7 @@ WE=4
 SPIaddress=0
 data=B
 ```
+
+# Circuit Diagram
+
+![EEPROM programmr circuit diagram](circuit diagram Mk1a.png)

@@ -6,12 +6,14 @@ struct _EEPROM {
 	uint8_t *addrpins;
 	uint8_t write_en;
 	uint8_t output_en;
+	uint8_t busy;
 	uint8_t dataport;
 	uint8_t datadir;
 	uint8_t addrport;
 	uint8_t addrdir;
 	int testmode;
 	int delayusec;
+	int pulsewidth;
 	unsigned int memsize;
 };
 typedef struct _EEPROM EEProm;

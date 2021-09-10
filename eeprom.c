@@ -23,21 +23,29 @@ int eeprom_writebyte(EEProm *eeprom, uint16_t address, uint8_t byte, int method)
 	if (eeprom->testmode) {
 		printf("Writing %02x to %04x\n", byte, address);
 	} else {
+		if (method==2 && eeprom->busy>0) {
+		}
+		
 		bcm2835_gpio_write(eeprom->output_en, HIGH);                    // Disable EEPROM output
 		mcp23s17_writebyte(eeprom->mcp, eeprom->datadir, 0x00);         // Set 23s17 port A (data pins) to be outputs
 		mcp23s17_writebyte(eeprom->mcp, eeprom->dataport, byte);        // Write next byte
 		bcm2835_gpio_write(eeprom->write_en, LOW);                      // Pulse write enable low
-		usleep(1);                                              		// Longer than a microsecond...???
+//		usleep(1);                                              		// Longer than a microsecond...???
+		bcm2835_delayMicroseconds(eeprom->pulsewidth);
 		bcm2835_gpio_write(eeprom->write_en, HIGH);
 		
-		if (method) {
+		if (method==1) {
 			mcp23s17_writebyte(eeprom->mcp, eeprom->datadir, 0xff);
 			uint8_t readbyte;
 			do {
 				mcp23s17_readbyte(eeprom->mcp, eeprom->dataport, &readbyte);
 			} while (byte!=readbyte);
 		} else {
-			usleep(eeprom->delayusec);
+//			usleep(eeprom->delayusec);
+			bcm2835_delayMicroseconds(eeprom->delayusec);
+		}
+		
+		if (method==2 && eeprom->busy>0) {
 		}
 	}
 
@@ -99,6 +107,9 @@ EEProm *make_EEPROM(MCP23s17 *mcp, unsigned int memsize, int naddrpins, int writ
 	eeprom->datadir = datadir;
 	eeprom->dataport = dataport;
 	eeprom->addrport = addrport;
+	
+	eeprom->pulsewidth = 1;
+	eeprom->busy = -1;
 	
 	for(i=0; i<naddrpins; i++) {
 		eeprom->addrpins[i] = addrpins[i];
