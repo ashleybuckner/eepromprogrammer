@@ -1,6 +1,8 @@
 #include "srecord.h"
 
-#define BUFFLEN 256
+#ifndef BUFFLEN
+#define BUFFLEN 512			//	256
+#endif
 
 int memory_loadSRecFile(uint8_t *memory, FILE *fin, unsigned int rombase, unsigned int bffrsize, unsigned int memsize,
                         uint16_t *address_out)
