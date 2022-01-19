@@ -30,6 +30,7 @@ static gboolean testmode = FALSE;
 static gchar *format = NULL;
 static int delayusec = 10000;
 static int pulsewidth = 1; 
+static int linelen = 16;
 
 static GOptionEntry entries[] = {
     {"address",     'a', 0, G_OPTION_ARG_INT, &mcpaddr, "MCP hardware address", NULL},
@@ -48,6 +49,7 @@ static GOptionEntry entries[] = {
     {"testmode",    't', 0, G_OPTION_ARG_NONE, &testmode, "Test mode", NULL},
     {"delay",       'd', 0, G_OPTION_ARG_INT, &delayusec, "Programming delay (usec)", NULL},
     {"pulsewidth",  'p', 0, G_OPTION_ARG_INT, &pulsewidth, "Write enable pulse width (usec)", NULL},
+    {"linelen",     'l', 0, G_OPTION_ARG_INT, &linelen, "Output line length (bytes)", NULL},
     {NULL}
 };
 
@@ -240,13 +242,18 @@ int main(int argc, const char * argv[])
     if (readrom) {
         if (verbose) printf("Reading EEPROM... rombase = 0x%04x, memsize = 0x%04x\n\n", rombase, memsize);
         
+//	Write header
+        if (g_strcmp0(format, "S19")==0) {
+			printf("S0090000656570726f6774\n");
+		}
+        
 		uint8_t bytebffr[16];
 
-        for(address = 0; address<memsize; address+=16) {
+        for(address = 0; address<memsize; address+=linelen) {
 			int i;
 			int suppress = TRUE;
 //			int suppress = FALSE;
-			for(i=0; i<16; i++) {
+			for(i=0; i<linelen; i++) {
 				eeprom_readbyte(eeprom, address + i, &byte);
 				if (byte!=0xff) suppress = FALSE;
 				bytebffr[i] = byte;
@@ -254,7 +261,7 @@ int main(int argc, const char * argv[])
 		
 			if (suppress) {
 				continue;
-			}
+			} 
 		
 			if (!format) {
 				printf("%04x", rombase + address);
@@ -270,9 +277,11 @@ int main(int argc, const char * argv[])
 				
 				putchar('\n');
 			} else if (g_strcmp0(format, "S19")==0) {
-				uint8_t checksum = 0;
-				g_print("S113%04x", rombase + address);
-				for(i=0; i<16; i++) {
+				uint16_t addr = rombase + address;
+//				printf("%04x %02x %02x\n", addr, addr>>8 & 0xff, addr & 0xff);
+				uint8_t checksum = /*0x13*/ linelen + 3 + (addr & 0xff) + (addr>>8 & 0xff);
+				printf("S1%02x%04x", linelen + 3, addr);
+				for(i=0; i<linelen; i++) {
 					byte = bytebffr[i];
 					printf("%02x", byte);
 					checksum += byte;
@@ -280,8 +289,10 @@ int main(int argc, const char * argv[])
 				g_print("%02x\n", (uint8_t)(~checksum));
 			}
 		}
-		
+
+//	TO DO - record count		
 		if (g_strcmp0(format, "S19")==0) {
+//			puts("S5030006F6")
 			puts("S9030000FC");
 		}
 	}
