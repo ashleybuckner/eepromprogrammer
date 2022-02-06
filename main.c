@@ -43,7 +43,7 @@ static GOptionEntry entries[] = {
     {"erase",       'x', 0, G_OPTION_ARG_NONE, &eraserom, "Erase ROM", NULL},
     {"interactive", 'i', 0, G_OPTION_ARG_NONE, &interactive, "Interactive", NULL},
     {"verbose",     'v', 0, G_OPTION_ARG_NONE, &verbose, "Verbose mode", NULL},
-    {"method",      'm', 0, G_OPTION_ARG_INT, &mcpaddr, "Programming method", NULL},
+    {"method",      'm', 0, G_OPTION_ARG_INT, &method, "Programming method", NULL},
     {"erasebyte",   'e', 0, G_OPTION_ARG_INT, &erasebyte, "Erase value", NULL},
     {"format",      'f', 0, G_OPTION_ARG_STRING, &format, "Format", NULL},
     {"testmode",    't', 0, G_OPTION_ARG_NONE, &testmode, "Test mode", NULL},
