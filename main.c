@@ -67,15 +67,6 @@ uint8_t addrdir = -1;
 int main(int argc, const char * argv[])
 {
     GError *error = NULL;
-    GOptionContext *context = g_option_context_new("- MCP23S17.");
-    g_option_context_add_main_entries(context, entries, NULL);
-
-    if (!g_option_context_parse(context, &argc, (gchar ***)&argv, &error))
-    {
-         g_print("option parsing failed: %s\n", error->message);
-         exit(1);
-    }
-    
     GKeyFile *keyfile = g_key_file_new();
     gboolean loaded = g_key_file_load_from_file(keyfile, "/home/pi/.eeprogrc", G_KEY_FILE_NONE, NULL);
     
@@ -111,6 +102,15 @@ int main(int argc, const char * argv[])
 	}
 
     g_key_file_free(keyfile);
+    
+    GOptionContext *context = g_option_context_new("- MCP23S17.");
+    g_option_context_add_main_entries(context, entries, NULL);
+
+    if (!g_option_context_parse(context, &argc, (gchar ***)&argv, &error))
+    {
+         g_print("option parsing failed: %s\n", error->message);
+         exit(1);
+    }
     
     int i;
 	if (verbose) {
