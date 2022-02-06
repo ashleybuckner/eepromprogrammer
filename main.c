@@ -5,6 +5,22 @@
 //  Created by ashley on 27/09/2020.
 //
 
+/*
+	EEPROM Programmer v1.0
+	Address pin A8   = 26
+	Address pin A9   = 5
+	Address pin A10   = 23
+	Address pin A11   = 19
+	Address pin A12   = 24
+	Write enable pin      = 4
+	O/P enable pin        = 17
+	Data GPIO register    = 19
+	Data DIR register     = 1
+	Address GPIO register = 18
+	Address DIR register  = 0
+	SPI address           = 0
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -53,9 +69,12 @@ static GOptionEntry entries[] = {
     {NULL}
 };
 
-int naddrpins = 5;
+//int naddrpins = 5;
 
-uint8_t addrpins[] = {0, 0, 0, 0, 0};							// Breadboard
+//uint8_t addrpins[] = {0, 0, 0, 0, 0};							// Breadboard
+
+int naddrpins = 0;
+
 uint8_t write_en = 0;
 uint8_t output_en = 0;
 
@@ -71,14 +90,26 @@ int main(int argc, const char * argv[])
     gboolean loaded = g_key_file_load_from_file(keyfile, "/home/pi/.eeprogrc", G_KEY_FILE_NONE, NULL);
     
     int busy = -1;
+    GArray *addrpins = g_array_new(FALSE, TRUE, sizeof(uint8_t));
  
  //	TO DO - read in npins and put a loop in...   
     if (loaded) {
-		addrpins[0] = g_key_file_get_integer(keyfile, "GPIO", "A8", NULL);
+/*		addrpins[0] = g_key_file_get_integer(keyfile, "GPIO", "A8", NULL);
 		addrpins[1] = g_key_file_get_integer(keyfile, "GPIO", "A9", NULL);
 		addrpins[2] = g_key_file_get_integer(keyfile, "GPIO", "A10", NULL);
 		addrpins[3] = g_key_file_get_integer(keyfile, "GPIO", "A11", NULL);
-		addrpins[4] = g_key_file_get_integer(keyfile, "GPIO", "A12", NULL);
+		addrpins[4] = g_key_file_get_integer(keyfile, "GPIO", "A12", NULL); */
+		
+		uint8_t addrline = 8;
+		for(naddrpins=0; naddrpins<8; naddrpins++) {
+			gchar *str = g_strdup_printf("A%d", addrline++);
+			uint8_t pin = g_key_file_get_integer(keyfile, "GPIO", str, NULL);
+			if (pin==0) break;
+			g_array_append_val(addrpins, pin);
+			g_print("%s %d %d\n", str, pin, addrpins->len);
+			g_free(str);
+		}
+		
 		output_en = g_key_file_get_integer(keyfile, "GPIO", "OE", NULL);
 		write_en = g_key_file_get_integer(keyfile, "GPIO", "WE", NULL);
 		busy = g_key_file_get_integer(keyfile, "GPIO", "BUSY", NULL);
@@ -100,6 +131,10 @@ int main(int argc, const char * argv[])
 	} else {
 		printf("Could not load eeprogrc\n");
 	}
+	
+	if (naddrpins==0) {
+		goto finish;
+	}
 
     g_key_file_free(keyfile);
     
@@ -116,7 +151,7 @@ int main(int argc, const char * argv[])
 	if (verbose) {
 		puts("EEPROM Programmer v1.0");
 		for(i=0; i<naddrpins; i++) {
-			g_print("Address pin A%d   = %d\n", i+8, addrpins[i]);
+			g_print("Address pin A%d   = %d\n", i+8, g_array_index(addrpins, uint8_t, i));
 		}
 		g_print("Write enable pin      = %d\n", write_en);
 		g_print("O/P enable pin        = %d\n", output_en);
@@ -155,7 +190,7 @@ int main(int argc, const char * argv[])
 		goto finish;
 	}
 
-    EEProm *eeprom = make_EEPROM(mcp, memsize, naddrpins, write_en, output_en, addrdir, datadir, addrport, dataport, addrpins);
+    EEProm *eeprom = make_EEPROM(mcp, memsize, naddrpins, write_en, output_en, addrdir, datadir, addrport, dataport, (uint8_t *)addrpins->data);
     if (!eeprom) {
 		goto finish;
 	}
