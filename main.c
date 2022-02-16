@@ -69,10 +69,6 @@ static GOptionEntry entries[] = {
     {NULL}
 };
 
-//int naddrpins = 5;
-
-//uint8_t addrpins[] = {0, 0, 0, 0, 0};							// Breadboard
-
 int naddrpins = 0;
 
 uint8_t write_en = 0;
@@ -106,7 +102,7 @@ int main(int argc, const char * argv[])
 			uint8_t pin = g_key_file_get_integer(keyfile, "GPIO", str, NULL);
 			if (pin==0) break;
 			g_array_append_val(addrpins, pin);
-			g_print("%s %d %d\n", str, pin, addrpins->len);
+//			g_print("%s %d %d\n", str, pin, addrpins->len);
 			g_free(str);
 		}
 		
