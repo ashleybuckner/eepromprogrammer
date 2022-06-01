@@ -38,7 +38,7 @@ static gboolean verifyrom = FALSE;
 static gboolean eraserom = FALSE;
 static gboolean interactive = FALSE;
 static gboolean verbose = FALSE;
-static int buffersize = 16;
+static int buffersize = 256;
 static int mcpaddr = 0;
 static int method = 0;
 static int erasebyte = 0xff;
@@ -47,6 +47,7 @@ static gchar *format = NULL;
 static int delayusec = 10000;
 static int pulsewidth = 1; 
 static int linelen = 16;
+static gchar *devicetype = NULL;
 
 static GOptionEntry entries[] = {
     {"address",     'a', 0, G_OPTION_ARG_INT, &mcpaddr, "MCP hardware address", NULL},
@@ -66,6 +67,8 @@ static GOptionEntry entries[] = {
     {"delay",       'd', 0, G_OPTION_ARG_INT, &delayusec, "Programming delay (usec)", NULL},
     {"pulsewidth",  'p', 0, G_OPTION_ARG_INT, &pulsewidth, "Write enable pulse width (usec)", NULL},
     {"linelen",     'l', 0, G_OPTION_ARG_INT, &linelen, "Output line length (bytes)", NULL},
+    {"buffersize",  'z', 0, G_OPTION_ARG_INT, &buffersize, "Input buffer size (bytes)", NULL},
+    {"device",      'D', 0, G_OPTION_ARG_STRING, &devicetype, "Device type", NULL},
     {NULL}
 };
 
@@ -156,6 +159,7 @@ int main(int argc, const char * argv[])
 		g_print("Address GPIO register = %d\n", addrport);
 		g_print("Address DIR register  = %d\n", addrdir);
 		g_print("SPI address           = %d\n", mcpaddr);
+        if (devicetype) puts(devicetype);
 		putchar('\n');
 	}
 	
@@ -204,7 +208,7 @@ int main(int argc, const char * argv[])
 		address = rombase;
 		for(;;) {
 			eeprom_readbyte(eeprom, address - rombase, &byte);
-			printf("%04x %02x ", address, byte);
+//			printf("%04x %02x ", address, byte);
 			fflush(stdout);
 			fgets(lnbffr, 80, stdin);
 			if (lnbffr[0]=='.') {
@@ -247,12 +251,16 @@ int main(int argc, const char * argv[])
         }
 
         uint8_t *memory = malloc(buffersize); // buffersize
+        int rectype;
         if (verbose) printf("Programming EEPROM...\n\n");
         for(;!feof(fin);) {
-//            int nread = memory_loadSRecFile(memory, fin, rombase, memsize, &address);
-            int nread = memory_loadSRecFile(memory, fin, rombase, buffersize, memsize, &address);
+//            int nread = memory_loadFile(memory, fin, rombase, buffersize, memsize, &address);
+			unsigned int addr;
+			int nread = srec_read(memory, fin, rombase, buffersize, &addr, &rectype);
+//			printf("nread = %d rectype = %d\n", nread, rectype);
+			address = addr;
             
-            if (nread==0) {
+            if (nread==0 || !rectype) {
                 continue;
             }
             
@@ -263,6 +271,11 @@ int main(int argc, const char * argv[])
                 goto finish;
             } else {
                 eeprom_writebuffer(eeprom, address - rombase, memory, nread, method);
+				printf("%8d %04x", nread, address);
+				int i;
+				for (i=0; i<nread; i++) printf(" %02x", memory[i]);
+				putchar('\n');
+            
             }
         }
         
