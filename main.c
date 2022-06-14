@@ -30,7 +30,7 @@
 #include "srecord.h"
 
 static int clock_divider = 64;
-static unsigned int rombase = 0xe000;
+static unsigned int rombase = 0x0000; //0xe000;
 static unsigned int memsize = 0x2000;
 static gboolean readrom = FALSE;
 static gboolean writerom = FALSE;
@@ -92,13 +92,7 @@ int main(int argc, const char * argv[])
     GArray *addrpins = g_array_new(FALSE, TRUE, sizeof(uint8_t));
  
  //	TO DO - read in npins and put a loop in...   
-    if (loaded) {
-/*		addrpins[0] = g_key_file_get_integer(keyfile, "GPIO", "A8", NULL);
-		addrpins[1] = g_key_file_get_integer(keyfile, "GPIO", "A9", NULL);
-		addrpins[2] = g_key_file_get_integer(keyfile, "GPIO", "A10", NULL);
-		addrpins[3] = g_key_file_get_integer(keyfile, "GPIO", "A11", NULL);
-		addrpins[4] = g_key_file_get_integer(keyfile, "GPIO", "A12", NULL); */
-		
+    if (loaded) {		
 		uint8_t addrline = 8;
 		for(naddrpins=0; naddrpins<8; naddrpins++) {
 			gchar *str = g_strdup_printf("A%d", addrline++);
@@ -114,6 +108,16 @@ int main(int argc, const char * argv[])
 		busy = g_key_file_get_integer(keyfile, "GPIO", "BUSY", NULL);
 		mcpaddr = g_key_file_get_integer(keyfile, "MCP23S17", "SPIaddress", NULL);
 		gchar *port = g_key_file_get_string(keyfile, "MCP23S17", "data", NULL);
+		gchar *str = g_key_file_get_string(keyfile, "EEPROM", "rombase", NULL);
+		if (str) {
+			rombase = (unsigned int)g_ascii_strtoull(str, NULL, 0);
+			g_free(str);
+		}
+		str = g_key_file_get_string(keyfile, "EEPROM", "memsize", NULL);
+		if (str) {
+			memsize = (unsigned int)g_ascii_strtoull(str, NULL, 0);
+			g_free(str);
+		}
 
 		if (g_strcmp0(port, "A")==0) {
 			dataport = GPIOA;
@@ -208,7 +212,7 @@ int main(int argc, const char * argv[])
 		address = rombase;
 		for(;;) {
 			eeprom_readbyte(eeprom, address - rombase, &byte);
-//			printf("%04x %02x ", address, byte);
+			printf("%04x %02x ", address, byte);
 			fflush(stdout);
 			fgets(lnbffr, 80, stdin);
 			if (lnbffr[0]=='.') {
