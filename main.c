@@ -275,11 +275,12 @@ int main(int argc, const char * argv[])
                 goto finish;
             } else {
                 eeprom_writebuffer(eeprom, address - rombase, memory, nread, method);
-				printf("%8d %04x", nread, address);
-				int i;
-				for (i=0; i<nread; i++) printf(" %02x", memory[i]);
-				putchar('\n');
-            
+                if (verbose) {
+					printf("%8d %04x", nread, address);
+					int i;
+					for (i=0; i<nread; i++) printf(" %02x", memory[i]);
+					putchar('\n');
+			}
             }
         }
         
@@ -335,6 +336,17 @@ int main(int argc, const char * argv[])
 					checksum += byte;
 				}
 				g_print("%02x\n", (uint8_t)(~checksum));
+			} else if (g_strcmp0(format, "bin")==0) {
+				for(i=0; i<16; i++) {
+					printf("%04x ", rombase + address + i);
+					byte = bytebffr[i];
+					int j;
+					for(j=0; j<8; j++) {
+						if ((byte & 0x80)==0) putchar('0'); else putchar('1');
+						byte<<=1;
+					}
+					putchar('\n');
+				}
 			}
 		}
 

@@ -5,6 +5,8 @@ date: February 2021
 ---
 
 # Introduction
+This project is now no longer under active development.
+
 This is a simple 28C64 EEPROM programmer for Rasperry Pis using an MCP23S17
 port expander and some level-shifting.
 
