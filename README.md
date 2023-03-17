@@ -23,7 +23,7 @@ Help Options:
   -h, --help            Show help options
 
 Application Options:
-  -a, --address         MCP address
+   -a, --address         MCP hardware address
   -c, --spiclock        SPI clock divider
   -b, --rombase         ROM base address
   -s, --memsize         ROM size (bytes)
@@ -38,6 +38,10 @@ Application Options:
   -f, --format          Format
   -t, --testmode        Test mode
   -d, --delay           Programming delay (usec)
+  -p, --pulsewidth      Write enable pulse width (usec)
+  -l, --linelen         Output line length (bytes)
+  -z, --buffersize      Input buffer size (bytes)
+  -D, --device          Device type
 ```
 # Options
 
