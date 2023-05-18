@@ -76,6 +76,7 @@ int naddrpins = 0;
 
 uint8_t write_en = 0;
 uint8_t output_en = 0;
+uint8_t buffer_en = 0;
 
 uint8_t dataport = -1;
 uint8_t datadir = -1;
@@ -105,6 +106,7 @@ int main(int argc, const char * argv[])
 		
 		output_en = g_key_file_get_integer(keyfile, "GPIO", "OE", NULL);
 		write_en = g_key_file_get_integer(keyfile, "GPIO", "WE", NULL);
+		buffer_en = g_key_file_get_integer(keyfile, "GPIO", "BUFFER", NULL);
 		busy = g_key_file_get_integer(keyfile, "GPIO", "BUSY", NULL);
 		mcpaddr = g_key_file_get_integer(keyfile, "MCP23S17", "SPIaddress", NULL);
 		gchar *port = g_key_file_get_string(keyfile, "MCP23S17", "data", NULL);
@@ -194,7 +196,8 @@ int main(int argc, const char * argv[])
 		goto finish;
 	}
 
-    EEProm *eeprom = make_EEPROM(mcp, memsize, naddrpins, write_en, output_en, addrdir, datadir, addrport, dataport, (uint8_t *)addrpins->data);
+    EEProm *eeprom = make_EEPROM(mcp, memsize, naddrpins, write_en, output_en, addrdir, 
+								 datadir, addrport, dataport, buffer_en, (uint8_t *)addrpins->data);
     if (!eeprom) {
 		goto finish;
 	}

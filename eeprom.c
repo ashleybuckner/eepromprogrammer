@@ -85,7 +85,8 @@ int eeprom_writebuffer(EEProm *eeprom, uint16_t address, uint8_t *bytes, uint16_
 }
 
 EEProm *make_EEPROM(MCP23s17 *mcp, unsigned int memsize, int naddrpins, int write_en, int output_en,
-					uint8_t addrdir, uint8_t datadir, uint8_t addrport, uint8_t dataport, uint8_t *addrpins)
+					uint8_t addrdir, uint8_t datadir, uint8_t addrport, uint8_t dataport, 
+					uint8_t buffer_en, uint8_t *addrpins)
 {
 	int i;
 	
@@ -117,6 +118,7 @@ EEProm *make_EEPROM(MCP23s17 *mcp, unsigned int memsize, int naddrpins, int writ
 	
 	eeprom->write_en = write_en;	
 	eeprom->output_en = output_en;
+	eeprom->buffer_en = buffer_en;
 
 	eeprom->testmode = 0;
 
@@ -130,6 +132,8 @@ EEProm *make_EEPROM(MCP23s17 *mcp, unsigned int memsize, int naddrpins, int writ
     bcm2835_gpio_write(eeprom->write_en, HIGH);
     bcm2835_gpio_fsel(eeprom->output_en, BCM2835_GPIO_FSEL_OUTP);
     bcm2835_gpio_write(eeprom->output_en, HIGH);
+    bcm2835_gpio_fsel(eeprom->buffer_en, BCM2835_GPIO_FSEL_OUTP);
+    bcm2835_gpio_write(eeprom->buffer_en, HIGH);
 
 //    1 => input
 //    0 => output

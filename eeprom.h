@@ -3,9 +3,10 @@
 struct _EEPROM {
 	MCP23s17 *mcp;
 	int naddrpins;
-	uint8_t *addrpins;
-	uint8_t write_en;
-	uint8_t output_en;
+	uint8_t *addrpins;					//	Address (A8-A15) pines fro EEPROM
+	uint8_t write_en;					//	EEPROM write enable (active low)
+	uint8_t output_en;					//	EEPROM output enable (active low)
+	uint8_t buffer_en;					//	EEPROM emulator input/output buffer output enable
 	uint8_t busy;
 	uint8_t dataport;
 	uint8_t datadir;
@@ -19,7 +20,8 @@ struct _EEPROM {
 typedef struct _EEPROM EEProm;
 
 EEProm *make_EEPROM(MCP23s17 *mcp, unsigned int memsize, int naddrpins, int write_en, int output_en,
-					uint8_t addrdir, uint8_t datadir, uint8_t addrport, uint8_t dataport, uint8_t *addrpins);
+					uint8_t addrdir, uint8_t datadir, uint8_t addrport, uint8_t dataport, 
+					uint8_t buffer_en, uint8_t *addrpins);
 void eeprom_free(EEProm *eeprom);
 
 void eeprom_setaddress(EEProm *eeprom, uint16_t address);
