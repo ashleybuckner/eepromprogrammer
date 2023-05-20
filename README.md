@@ -112,8 +112,8 @@ This allows to set up the pins and ports. Pin numbers are BCM 2835 GPIO pin numb
 If data is set to B, then port B will be used for the EEPROM data and A for the low
 order (bits 0 to 7) addresses. If 'B' the other way round. This must be set. OE
 and WE allow to specify the GPIO pins for the EEPROM's output enable and write
-enable pins. A8 to A12 specify the high order address pins - currently only EEPROMs
-with a size of no more than 8kbytes can be programmed.
+enable pins. A8 onwards2 specify the high order address pins - currently only EEPROMs
+with a size of no more than 32kbytes can be programmed (or, rather, have been tested).
 
 An example file is given below.  
 
@@ -124,6 +124,8 @@ A9=5
 A10=23
 A11=19
 A12=24
+A13=20
+A14=21
 OE=17
 WE=4
 
